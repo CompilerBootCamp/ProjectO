@@ -1,14 +1,13 @@
 #include <iostream>
+#include <fstream>
 #include <vector>
 #include <string>
 #include <unordered_map>
+#include <set>
 using namespace std;
 // база ключевых слов
-std::unordered_map<std::string, int> all_keywords = {
-	{"class", 1},
-	{"Program", 2}
-};
-
+std::set <std::string> all_keywords = {"class", "Program", "var", "Array", "is", "true", "while", "end"};
+std::set <char> all_delimiters = {':', '{', '}', '(', ')', '='};
 // classes Tokens
 
 class Tokens {
@@ -49,22 +48,35 @@ class Identificator:public Tokens {};
 // класс лексическогог анализатора
 std::vector<Tokens> all_tokens;
 
-void read_tokens() {
+void read_tokens(ifstream& stream) {
 	char ch;
 	std::string s;
-	while (std::cin>>s) {
-		cout << "new tokens: " <<s << std::endl;
+	while (stream >> s) {
+		//cout << "new tokens: " << s << endl;
 		std::string buf;
-		for(const auto& ch: s) {
-			buf += ch;
-			if ( /* buf можем определить к какому-либо классу*/ ) {
-				all.tokens.push_back(buf);
+		for(auto ch: s) {
+			if (all_delimiters.find(ch)!=all_delimiters.end()) {
+				cout << "\tfind token: " << buf << endl;
+				cout << "\tfind token: " << ch << endl;
 				buf.clear();
+
 			}
+			else {
+				buf += ch;
+				if ( all_keywords.find(buf)!=all_keywords.end()) {
+					cout << "\tfind token: " << buf << endl;
+					buf.clear();
+				}
+			}
+			
 		}
 	}
 }
 
 int main() {
-	read_tokens();
+	cout << "start" <<endl;
+	ifstream stream;
+	stream.open("test.txt");
+	read_tokens(stream);
+	stream.close();
 }
