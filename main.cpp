@@ -4,10 +4,11 @@
 #include <string>
 #include <unordered_map>
 #include <set>
+#include <algorithm>
 using namespace std;
 // база ключевых слов
 std::set <std::string> all_keywords = {"class", "Program", "var", "Array", "is", "true", "while", "end"};
-std::set <char> all_delimiters = {':', '{', '}', '(', ')', '='};
+std::set <char> all_delimiters = {':', '{', '}', '(', ')', '=', '[', ']',',','.'};
 // classes Tokens
 
 class Tokens {
@@ -48,35 +49,33 @@ class Identificator:public Tokens {};
 // класс лексическогог анализатора
 std::vector<Tokens> all_tokens;
 
-void read_tokens(ifstream& stream) {
-	char ch;
-	std::string s;
-	while (stream >> s) {
-		//cout << "new tokens: " << s << endl;
-		std::string buf;
-		for(auto ch: s) {
-			if (all_delimiters.find(ch)!=all_delimiters.end()) {
-				cout << "\tfind token: " << buf << endl;
-				cout << "\tfind token: " << ch << endl;
-				buf.clear();
-
-			}
-			else {
-				buf += ch;
-				if ( all_keywords.find(buf)!=all_keywords.end()) {
-					cout << "\tfind token: " << buf << endl;
-					buf.clear();
-				}
-			}
-			
-		}
+bool read_token(ifstream& stream) {
+	static char symbol = ' ';
+	string s;
+	while(isspace(symbol)) symbol = stream.get();
+	if (isalpha(symbol)) {
+		s = {symbol};
+		while(isalnum(symbol=stream.get())) s += (symbol);
 	}
+	else 
+		if ( isdigit(symbol) ) {
+			s = {symbol};
+			while (isdigit(symbol=stream.get())) s += (symbol);
+		}
+		else {
+			if (*all_delimiters.lower_bound(symbol)==symbol) {
+				s = {symbol};
+				symbol = stream.get();
+			}
+		}
+	while(isspace(symbol)) symbol = stream.get();	
+	cout << "\ttokens: " << s << endl;
+	return symbol != EOF;
 }
 
 int main() {
-	cout << "start" <<endl;
 	ifstream stream;
 	stream.open("test.txt");
-	read_tokens(stream);
+	while (read_token(stream)) ;
 	stream.close();
 }
