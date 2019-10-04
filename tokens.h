@@ -10,28 +10,33 @@ enum Keywords { Class, Extends, Is, End, Var, Method, This, While, Loop, If, The
 
 enum Delimiters {LeftRoundBracket, RightRoundBracket, LeftRectBracket, RightRectBracket, Dot, Comma, NotDelimiter};
 
+struct Span {
+    int lineIndex;
+    int symbolIndex;
+};
 
 class Tokens {
 public:
     std::string image;
-    Tokens(const std::string &image) : image(image) {}
+    Span span;
+    Tokens(const std::string &image, const Span &span) : image(image), span(span) {}
 };
 
 class Keyword:public Tokens {
     int id;
 public:
-    Keyword(const std::string &image, int id) : Tokens(image), id(id) {}
+    Keyword(const std::string &image, const Span &span, int id) : Tokens(image, span), id(id) {}
 };
 
 class Literal:public Tokens {
 public:
-    Literal(const std::string &image) : Tokens(image) {}
+    Literal(const std::string &image, const Span &span) : Tokens(image, span) {}
 };
 
 class IntegerLiteral:public Literal {
     int value;
 public:
-    IntegerLiteral(const std::string &image) : Literal(image) {
+    IntegerLiteral(const std::string &image, const Span &span) : Literal(image, span) {
         value = std::stoi(image);
     }
 };
@@ -39,7 +44,7 @@ public:
 class RealLiteral:public Literal {
     double value;
 public:
-    RealLiteral(const std::string &image) : Literal(image) {
+    RealLiteral(const std::string &image, const Span &span) : Literal(image, span) {
         value = std::stod(image);
     }
 };
@@ -47,7 +52,7 @@ public:
 class BoolLiteral:public Literal {
     bool value;
 public:
-    BoolLiteral(const std::string &image) : Literal(image) {
+    BoolLiteral(const std::string &image, const Span &span) : Literal(image, span) {
         value = image == "true" ? true : false;
     }
 };
@@ -56,16 +61,17 @@ public:
 class Delimiter:public Tokens {
     int delimiterCode;
 public:
-    Delimiter(const std::string &image, int delimiterCode) : Tokens(image), delimiterCode(delimiterCode) {}
+    Delimiter(const std::string &image, const Span &span, int delimiterCode) : Tokens(image, span), delimiterCode(delimiterCode) {}
 };
 
 class Identificator:public Tokens {
 public:
-    Identificator(const std::string &image) : Tokens(image) {}
+    Identificator(const std::string &image, const Span &span) : Tokens(image, span) {}
 };
 
 class Operator:public Tokens {
 public:
-    Operator(const std::string &image) : Tokens(image) {}
+    Operator(const std::string &image, const Span &span) : Tokens(image, span) {}
 };
 #endif //COMPILER_TOKENS_H
+

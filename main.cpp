@@ -18,7 +18,7 @@ int main() {
     auto v = makeLexAnalysis(fileData, fileData + size);
 
     for (auto it = v.begin(); it != v.end(); ++it)
-        std::cout << (*it)->image << std::endl;
+        std::cout << (*it)->image << "\t\t(" << (*it)->span.lineIndex << " " << (*it)->span.symbolIndex << ")" << std::endl;
 
     delete[] fileData;
     deleteVector(v);
