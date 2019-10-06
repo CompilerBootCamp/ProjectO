@@ -1,81 +1,39 @@
 #include <iostream>
+#include "lexAnalizer.h"
+#include "parser.h"
+#include <string.h>
 #include <fstream>
-#include <vector>
-#include <string>
-#include <unordered_map>
-#include <set>
-#include <algorithm>
-using namespace std;
-// база ключевых слов
-std::set <std::string> all_keywords = {"class", "Program", "var", "Array", "is", "true", "while", "end"};
-std::set <char> all_delimiters = {':', '{', '}', '(', ')', '=', '[', ']',',','.'};
-// classes Tokens
 
-class Tokens {
-	std::string name;
-};
-
-class Keyword:public Tokens {
-	int id;
-};
-class Literal:public Tokens {
-};
-// int vs double ?????
-class Lit_int:public Literal {
-	int value;
-};
-class Lit_real:public Literal {
-	double value;
-};
-class Lit_bool:public Literal {
-	bool value;
-};
-
-class Variable:public Tokens{
-
-};
-class Whitespaces:public Tokens {
-	
-};
-class Delimiter:public Tokens {
-	// сразу определить перечень
-	enum {
-		LeftRectBracket,
-		RightrRectBracket
-	};
-};
-class Identificator:public Tokens {};
-
-// класс лексическогог анализатора
-std::vector<Tokens> all_tokens;
-
-bool read_token(ifstream& stream) {
-	static char symbol = ' ';
-	string s;
-	while(isspace(symbol)) symbol = stream.get();
-	if (isalpha(symbol)) {
-		s = {symbol};
-		while(isalnum(symbol=stream.get())) s += (symbol);
-	}
-	else 
-		if ( isdigit(symbol) ) {
-			s = {symbol};
-			while (isdigit(symbol=stream.get())) s += (symbol);
-		}
-		else {
-			if (*all_delimiters.lower_bound(symbol)==symbol) {
-				s = {symbol};
-				symbol = stream.get();
-			}
-		}
-	while(isspace(symbol)) symbol = stream.get();	
-	cout << "\ttokens: " << s << endl;
-	return symbol != EOF;
+static std::ifstream::pos_type getFileSize(const char* fileName) {
+    std::ifstream in(fileName, std::ifstream::ate | std::ifstream::binary);
+    return in.tellg();
 }
 
 int main() {
-	ifstream stream;
-	stream.open("test.txt");
-	while (read_token(stream)) ;
-	stream.close();
+    // Предыдущий main с лексером перенес в файл lexx2.cpp
+    // main_lexx2();
+
+    size_t size = getFileSize("testClasses.txt");
+    char* fileData = new char[size];
+    FILE* file = fopen("testClasses.txt", "rb");
+    if (file == NULL)
+        return -1;
+    fread(fileData, size, 1, file);
+    auto v = makeLexAnalysis(fileData, fileData + size);
+
+    std::cout << "Lexer results:" << std::endl;
+    for (auto it = v.begin(); it != v.end(); ++it)
+        (*it)->printInformation();
+
+    std::cout << std::endl << "Parser results:" << std::endl;
+    try {
+        ProgramNode program(v.begin(), v.end());
+        program.print();
+    }
+    catch(std::exception const&e) {
+
+    }
+
+    delete[] fileData;
+    deleteVector(v);
 }
