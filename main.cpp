@@ -27,8 +27,8 @@ int main() {
 
     std::cout << std::endl << "Parser results:" << std::endl;
     try {
-        ProgramNode program(v.begin(), v.end());
-        program.print();
+        Parser parser(v.begin(), v.end());
+        parser.print();
     }
     catch(std::exception const&e) {
 

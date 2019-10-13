@@ -22,12 +22,12 @@ static const std::unordered_map<std::string, int> keywords = {
 
 enum FsmStates {
     StartSymbol,
-    Colon,
+    FindColon,
     NumericLiteral,
     StringLexeme
 };
 
-static Delimiters getDelimiterCode(char c) {
+static int getDelimiterCode(char c) {
     switch (c) {
         case '(':
             return LeftRoundBracket;
@@ -59,7 +59,7 @@ std::vector<Tokens*> makeLexAnalysis(const char* str, const char* endStr) {
             case StartSymbol:
                 delimiterCode = getDelimiterCode(*str);
                 if (delimiterCode != NotDelimiter){
-                    all_tokens.push_back(new Delimiter(std::string(1, *str), {lineIndex, str-stringStart}, delimiterCode));
+                    all_tokens.push_back(new Tokens(std::string(1, *str), {lineIndex, str-stringStart}, delimiterCode));
 		    str++;
 		}
                 else if (isspace(*str)){
@@ -71,7 +71,7 @@ std::vector<Tokens*> makeLexAnalysis(const char* str, const char* endStr) {
 		}
                 else if (*str == ':') {
                     str++;
-                    fsmState = Colon;
+                    fsmState = FindColon;
                 }
                 else if (isalpha(*str)) {
                     lexemeStart = str;
@@ -85,13 +85,13 @@ std::vector<Tokens*> makeLexAnalysis(const char* str, const char* endStr) {
                 }
                 break;
                 
-            case Colon:
+            case FindColon:
                 if (*str == '=') {
-                	all_tokens.push_back(new Operator(":=", {lineIndex, str-stringStart-1}));
+                	all_tokens.push_back(new Tokens(":=", {lineIndex, str-stringStart-1}, Assignment));
                 	str++;
                 }
                 else
-                    all_tokens.push_back(new Delimiter(":", {lineIndex, str-stringStart-1}, Colon));
+                    all_tokens.push_back(new Tokens(":", {lineIndex, str-stringStart-1}, Colon));
                 fsmState = StartSymbol;
                 break;
 
@@ -101,9 +101,9 @@ std::vector<Tokens*> makeLexAnalysis(const char* str, const char* endStr) {
                 else {
                     std::string lexeme = std::string(lexemeStart, str);
                     if (lexeme.find('.') != std::string::npos)
-                        all_tokens.push_back(new RealLiteral(lexeme, {lineIndex, lexemeStart-stringStart}));
+                        all_tokens.push_back(new Tokens(lexeme, {lineIndex, lexemeStart-stringStart}, Literal));
                     else
-                        all_tokens.push_back(new IntegerLiteral(lexeme, {lineIndex, lexemeStart-stringStart}));
+                        all_tokens.push_back(new Tokens(lexeme, {lineIndex, lexemeStart-stringStart}, Literal));
                     fsmState = StartSymbol;
                 }
                 break;
@@ -115,11 +115,11 @@ std::vector<Tokens*> makeLexAnalysis(const char* str, const char* endStr) {
             	    std::string lexeme = std::string(lexemeStart, str);
             	    auto keyIt = keywords.find(lexeme);
             	    if (keyIt != keywords.end()) // найдено ключевое слово
-                        all_tokens.push_back(new Keyword(lexeme, {lineIndex, lexemeStart-stringStart}, (*keyIt).second));
+                        all_tokens.push_back(new Tokens(lexeme, {lineIndex, lexemeStart-stringStart}, (*keyIt).second));
             	    else if (lexeme == "true" || lexeme == "false") // найден литерал Boolean
-                        all_tokens.push_back(new BoolLiteral(lexeme, {lineIndex, lexemeStart-stringStart}));
+                        all_tokens.push_back(new Tokens(lexeme, {lineIndex, lexemeStart-stringStart}, Literal));
             	    else
-                        all_tokens.push_back(new Identificator(lexeme, {lineIndex, lexemeStart-stringStart}));
+                        all_tokens.push_back(new Tokens(lexeme, {lineIndex, lexemeStart-stringStart}, Identifier));
                     fsmState = StartSymbol;
             	}
                 break;
