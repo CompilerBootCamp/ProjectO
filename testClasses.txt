@@ -1,5 +1,27 @@
 class Test is
+
+	var i:1
+	method add(a:Integer, b:Integer):Integer is
+		var result : 10
+		result := result.Add(b, c, d)
+		return result
+	end
+	
+	method sub(x:Integer, y:Integer):Integer is
+		var result : 0
+		result := result.Sub(x,y, z)
+		return result
+	end
+	
+	method MaxInt(a: Integer):Integer is
+		var max: Integer(0)
+		var i: 1
+		while i.Less(a.Length) loop
+			var c : a.get(i)
+			if c.Greater(max) then max := a.get(i) else max := 0 end
+			i := i.Plus(1)
+		end
+		return max
+	end
 end
 
-class Test2 extends Test is 
-end
