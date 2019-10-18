@@ -47,8 +47,12 @@ std::string convertTokenToString(int type) {
             return ":";
         case Assignment:
             return ":=";
-        case Literal:
-            return "literal";
+        case BooleanLiteral:
+            return "booleanLiteral";
+        case IntegerLiteral:
+            return "integerLiteral";
+        case RealLiteral:
+            return "realLiteral";
         case Identifier:
             return "identifier";
         default:

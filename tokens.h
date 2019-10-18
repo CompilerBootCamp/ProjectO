@@ -10,7 +10,7 @@
 
 enum TokenTypes { Class, Extends, Is, End, Var, Method, This, While, Loop, If,
         Then, Else, Return, LeftRoundBracket, RightRoundBracket, LeftRectBracket,
-        RightRectBracket, Dot, Comma, Colon, NotDelimiter, Assignment, Literal, Identifier };
+        RightRectBracket, Dot, Comma, Colon, NotDelimiter, Assignment, IntegerLiteral, RealLiteral, BooleanLiteral, Identifier };
 
 struct Span {
     int lineIndex;
@@ -25,10 +25,6 @@ class Tokens {
     int type;
 public:
     Tokens(const std::string &image, const Span &span, int type) : image(image), span(span), type(type) {}
-
-    virtual void printInformation() {
-        std::cout << "(" << span.lineIndex << " " << span.symbolIndex << ")\t"  << image << std::endl;
-    }
 
     int getType() {
         return type;

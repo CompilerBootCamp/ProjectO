@@ -1,0 +1,13 @@
+class Factorial is
+	var result: 0
+	this(n:Integer)is
+		var value : 1
+		while n.GreaterInteger(0) loop
+			value := value.MulInteger(n)
+			n := n.MinusInteger(1)
+		end
+		result := value
+	end
+end
+
+

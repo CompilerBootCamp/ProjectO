@@ -60,15 +60,15 @@ std::vector<Tokens*> makeLexAnalysis(const char* str, const char* endStr) {
                 delimiterCode = getDelimiterCode(*str);
                 if (delimiterCode != NotDelimiter){
                     all_tokens.push_back(new Tokens(std::string(1, *str), {lineIndex, str-stringStart}, delimiterCode));
-		    str++;
-		}
+		            str++;
+                }
                 else if (isspace(*str)){
-		   if (*str == '\n'){
-			lineIndex++;
-			stringStart = str+1;
-		   }
+                   if (*str == '\n') {
+                    lineIndex++;
+                    stringStart = str+1;
+                   }
                    str++;
-		}
+                }
                 else if (*str == ':') {
                     str++;
                     fsmState = FindColon;
@@ -101,9 +101,9 @@ std::vector<Tokens*> makeLexAnalysis(const char* str, const char* endStr) {
                 else {
                     std::string lexeme = std::string(lexemeStart, str);
                     if (lexeme.find('.') != std::string::npos)
-                        all_tokens.push_back(new Tokens(lexeme, {lineIndex, lexemeStart-stringStart}, Literal));
+                        all_tokens.push_back(new Tokens(lexeme, {lineIndex, lexemeStart-stringStart}, RealLiteral));
                     else
-                        all_tokens.push_back(new Tokens(lexeme, {lineIndex, lexemeStart-stringStart}, Literal));
+                        all_tokens.push_back(new Tokens(lexeme, {lineIndex, lexemeStart-stringStart}, IntegerLiteral));
                     fsmState = StartSymbol;
                 }
                 break;
@@ -117,7 +117,7 @@ std::vector<Tokens*> makeLexAnalysis(const char* str, const char* endStr) {
             	    if (keyIt != keywords.end()) // найдено ключевое слово
                         all_tokens.push_back(new Tokens(lexeme, {lineIndex, lexemeStart-stringStart}, (*keyIt).second));
             	    else if (lexeme == "true" || lexeme == "false") // найден литерал Boolean
-                        all_tokens.push_back(new Tokens(lexeme, {lineIndex, lexemeStart-stringStart}, Literal));
+                        all_tokens.push_back(new Tokens(lexeme, {lineIndex, lexemeStart-stringStart}, BooleanLiteral));
             	    else
                         all_tokens.push_back(new Tokens(lexeme, {lineIndex, lexemeStart-stringStart}, Identifier));
                     fsmState = StartSymbol;

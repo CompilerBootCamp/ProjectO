@@ -24,9 +24,20 @@ TreeNode* Parser::parseIfStatement() {
 
 TreeNode* Parser::parseAssignmentStatement() {
     std::string varName = (*currentToken)->getImage();
-    expectNextToken(Assignment);
-    TreeNode* initializer = parseExpression();
-    return new AssignmentNode(varName, initializer);
+    int token = getNextToken();
+    if (token == Dot) {
+        expectNextToken(Identifier);
+        std::string fieldName = (*currentToken)->getImage();
+        expectNextToken(Assignment);
+        TreeNode* initializer = parseExpression();
+        return new FieldAssignmentNode(varName, fieldName, initializer);
+    } else if (token == Assignment) {
+        TreeNode* initializer = parseExpression();
+        return new VarAssignmentNode(varName, initializer);
+    } else
+        throwError("':=' expected");
+
+
 }
 
 TreeNode* Parser::parseStatement() {
@@ -44,46 +55,57 @@ TreeNode* Parser::parseStatement() {
     }
 }
 
-TreeNode* Parser::parseExpression(){
+TreeNode* Parser::parseIdentifier() {
+    std::string varName = (*currentToken)->getImage();
     int token = getNextToken();
-    if (token == Literal){
-        return new LiteralNode((*currentToken)->getImage());
-    } else if (token == Identifier) {
-        // поиск идентификатора в таблице символов
-        std::string varName = (*currentToken)->getImage();
+    if(token == Dot) {
+        expectNextToken(Identifier);
+        std::string memberName = (*currentToken)->getImage();
 
-        token = getNextToken();
-        if(token == Dot) {
-            expectNextToken(Identifier);
-            std::string memberName = (*currentToken)->getImage();
-
-            if (!checkNextToken(LeftRoundBracket)) {
-                --currentToken;
-                return new FieldAccessNode(varName, memberName);
-            }
-
-            std::vector<TreeNode*> args;
-            do{
-                args.push_back(parseExpression());
-            } while (checkNextToken(Comma));
-            expectCurrentToken(RightRoundBracket);
-            return new MethodInvokeNode(varName, memberName, args);
-        }
-        else if (token == LeftRoundBracket){
-            std::vector<TreeNode*> args;
-            do{
-                args.push_back(parseExpression());
-            } while (checkNextToken(Comma));
-            expectCurrentToken(RightRoundBracket);
-            return new ConstructorInvokeNode(varName, args);
-        }{
+        if (!checkNextToken(LeftRoundBracket)) {
             --currentToken;
-            return new VariableNode(varName);
+            return new FieldAccessNode(varName, memberName);
         }
 
+        std::vector<TreeNode*> args;
+        if (getNextToken()==RightRoundBracket)
+            return new MethodInvokeNode(varName, memberName, args);
+        --currentToken;
+        do{
+            args.push_back(parseExpression());
+        } while (checkNextToken(Comma));
+        expectCurrentToken(RightRoundBracket);
+        return new MethodInvokeNode(varName, memberName, args);
     }
-    else
-        throwError("literal or identifier expected");
+    else if (token == LeftRoundBracket){
+        std::vector<TreeNode*> args;
+        if (getNextToken()==RightRoundBracket)
+            return new ConstructorInvokeNode(varName, args);
+        --currentToken;
+        do{
+            args.push_back(parseExpression());
+        } while (checkNextToken(Comma));
+        expectCurrentToken(RightRoundBracket);
+        return new ConstructorInvokeNode(varName, args);
+    }{
+        --currentToken;
+        return new VariableNode(varName);
+    }
+}
+
+TreeNode* Parser::parseExpression(){
+    switch (getNextToken()) {
+        case RealLiteral:
+            return new RealLiteralNode((*currentToken)->getImage());
+        case IntegerLiteral:
+            return new IntegerLiteralNode((*currentToken)->getImage());
+        case BooleanLiteral:
+            return new BooleanLiteralNode((*currentToken)->getImage());
+        case Identifier:
+            return parseIdentifier();
+        default:
+            throwError("literal or identifier expected");
+    }
 }
 
 TreeNode* Parser::parseBody() {
@@ -98,7 +120,7 @@ TreeNode* Parser::parseBody() {
 
             expectNextToken(Colon);
             TreeNode* newValueExpression = parseExpression();
-            statements.push_back(new AssignmentNode(varName, newValueExpression));
+            statements.push_back(new VarDeclarationNode(varName, newValueExpression));
         }
         else
             statements.push_back(parseStatement());
@@ -106,7 +128,7 @@ TreeNode* Parser::parseBody() {
     return new BodyNode(symbols, statements);
 }
 
-TreeNode* Parser::parseParameter() {
+ParamNode* Parser::parseParameter() {
     expectNextToken(Identifier);
     std::string paramName = (*currentToken)->getImage();
 
@@ -116,9 +138,12 @@ TreeNode* Parser::parseParameter() {
     return new ParamNode(paramName, paramType);
 }
 
-std::vector<TreeNode*> Parser::parseParameters() {
-    std::vector<TreeNode*> params;
+std::vector<ParamNode*> Parser::parseParameters() {
+    std::vector<ParamNode*> params;
     expectNextToken(LeftRoundBracket);
+    if (getNextToken()==RightRoundBracket)
+        return params;
+    --currentToken;
     do{
         params.push_back(parseParameter());
     } while (checkNextToken(Comma));
@@ -127,11 +152,11 @@ std::vector<TreeNode*> Parser::parseParameters() {
     return params;
 }
 
-TreeNode* Parser::parseClassBody() {
+ClassBodyNode* Parser::parseClassBody() {
     std::unordered_map <std::string, std::string> symbols;
     std::vector <TreeNode*> methods;
-    std::vector <TreeNode*> varDeclarations;
-    TreeNode* constructor;
+    std::vector <FieldDeclarationNode*> varDeclarations;
+    TreeNode* constructor = nullptr;
 
     while (!checkNextToken(End)) {
         if(checkCurrentToken(Var)) {
@@ -141,13 +166,13 @@ TreeNode* Parser::parseClassBody() {
 
             expectNextToken(Colon);
             TreeNode* newValueExpression = parseExpression();
-            varDeclarations.push_back(new AssignmentNode(varName, newValueExpression));
+            varDeclarations.push_back(new FieldDeclarationNode(varName, newValueExpression));
         }
         else if (checkCurrentToken(Method)) {
             expectNextToken(Identifier);
             std::string methodName = (*currentToken)->getImage();
 
-            std::vector<TreeNode*> params = parseParameters();
+            std::vector<ParamNode*> params = parseParameters();
             std::string returnTypeName = "";
             if (checkNextToken(Colon)) {
                 expectNextToken(Identifier);
@@ -157,7 +182,7 @@ TreeNode* Parser::parseClassBody() {
             TreeNode* body = parseBody();
             methods.push_back(new MethodDeclarationNode(methodName, returnTypeName, params, body));
         } else if (checkCurrentToken(This)) {
-            std::vector<TreeNode*> params = parseParameters();
+            std::vector<ParamNode*> params = parseParameters();
             expectNextToken(Is);
             TreeNode* body = parseBody();
             constructor = new ConstructorDeclarationNode(params, body);
@@ -165,6 +190,7 @@ TreeNode* Parser::parseClassBody() {
             throwError("'var', 'method', 'this' expected");
 
     }
+    currentToken++;
     return new ClassBodyNode(symbols, varDeclarations, methods, constructor);
 }
 
@@ -189,7 +215,6 @@ TreeNode* Parser::parseClass(){
         ++currentToken;
     }
     expectCurrentToken(Is);
-    TreeNode* classBody = parseClassBody();
+    ClassBodyNode* classBody = parseClassBody();
     return new ClassNode(className, classTemplate, baseClass, classBody);
-
 }

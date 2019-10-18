@@ -20,7 +20,6 @@ class Parser {
     TokensIt currentToken;
     TokensIt startToken;
     TokensIt endToken;
-    TreeNode* baseNode;
 
     int getNextToken() {
         ++currentToken;
@@ -53,24 +52,34 @@ class Parser {
         throw std::exception();
     }
 
+    std::vector<TreeNode*> classes;
+
     TreeNode* parseWhileStatement();
     TreeNode* parseIfStatement();
     TreeNode* parseAssignmentStatement();
     TreeNode* parseStatement();
+    TreeNode* parseIdentifier();
     TreeNode* parseExpression();
     TreeNode* parseBody();
-    TreeNode* parseParameter();
-    std::vector<TreeNode*> parseParameters();
-    TreeNode* parseClassBody();
+    ParamNode* parseParameter();
+    std::vector<ParamNode*> parseParameters();
+    ClassBodyNode* parseClassBody();
     TreeNode* parseClass();
 
 public:
-    Parser(const TokensIt &start, const TokensIt &end) : currentToken(start), startToken(start), endToken(end) {
-        baseNode = parseClass();
+
+
+    Parser(const TokensIt &start, const TokensIt &end) : currentToken(start), startToken(start), endToken(end) { }
+
+    std::vector<TreeNode*> parseTokens() {
+        while(currentToken != endToken)
+            classes.push_back(parseClass());
+        return classes;
     }
 
     void print() {
-        baseNode->print("");
+        for (auto it = classes.begin(); it != classes.end(); ++it)
+            (*it)->print("");
     }
 };
 
