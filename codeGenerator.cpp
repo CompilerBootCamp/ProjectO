@@ -90,7 +90,7 @@ struct ProgramStruct {
     int result;
 };
 
-void generateCode(std::vector<TreeNode*> &baseNode) {
+void generateCode(std::vector<TreeNode*> &baseNode, std::string cmdCtor, std::vector<int> cmdArgs) {
 
     llvm::InitializeNativeTarget();
 
@@ -108,43 +108,19 @@ void generateCode(std::vector<TreeNode*> &baseNode) {
 
     module->print(llvm::errs(), nullptr);
 
-    llvm::Function* startFunction = module->getFunction("FibCtor");
+    std::string ctorName = cmdCtor + "Ctor";
+    llvm::Function* startFunction = module->getFunction(ctorName);
     llvm::ExecutionEngine* executionEngine = llvm::EngineBuilder(std::move(module)).create();
 
     ProgramStruct programStruct;
-    int arg = 0;
 
-    std::vector<llvm::GenericValue> args(2);
+    std::vector<llvm::GenericValue> args(cmdArgs.size()+1);
     args[0].PointerVal = &programStruct;
-    args[1].PointerVal = &arg;
+    for (int i=0; i<cmdArgs.size(); i++) {
+        args[i+1].PointerVal = &cmdArgs[i];
+    }
     executionEngine->runFunction(startFunction, args);
 
-
-    std::cout << std::endl << "Calculating Fibonacci:" << std::endl;
-    std::cout << "0 = " << programStruct.result << std::endl;
-
-    arg = 1;
-    executionEngine->runFunction(startFunction, args);
-    std::cout << "1 = " << programStruct.result << std::endl;
-
-    arg = 2;
-    executionEngine->runFunction(startFunction, args);
-    std::cout << "2 = " << programStruct.result << std::endl;
-
-    arg = 20;
-    executionEngine->runFunction(startFunction, args);
-    std::cout << "20 = " << programStruct.result << std::endl;
-
-    arg = 30;
-    executionEngine->runFunction(startFunction, args);
-    std::cout << "30 = " << programStruct.result << std::endl;
-
-    arg = 40;
-    executionEngine->runFunction(startFunction, args);
-    std::cout << "40 = " << programStruct.result << std::endl;
-
-    arg = 46;
-    executionEngine->runFunction(startFunction, args);
-    std::cout << "46 = " << programStruct.result << std::endl;
-
+    std::cout << std::endl << "Calculating " << cmdCtor << std::endl;
+    std::cout << "Result = "<< programStruct.result << std::endl;
 };

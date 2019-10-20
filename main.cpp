@@ -10,7 +10,15 @@ static std::ifstream::pos_type getFileSize(const char* fileName) {
     return in.tellg();
 }
 
-int main() {
+int main(int argc, char* argv[]) {
+    if (argc <= 1)
+        return -1;
+
+    std::string ctorName(argv[1]);
+    std::vector<int> args;
+    for (int i=2; i<argc; i++)
+        args.push_back(std::atoi(argv[i]));
+
     size_t size = getFileSize("testClasses.txt");
     char* fileData = new char[size];
     FILE* file = fopen("testClasses.txt", "rb");
@@ -29,7 +37,7 @@ int main() {
         Parser parser(v.begin(), v.end());
         std::vector<TreeNode*> classes = parser.parseTokens();
         parser.print();
-        generateCode(classes);
+        generateCode(classes, ctorName, args);
         for (auto it = classes.begin(); it != classes.end(); ++it)
             delete(*it);
     }
@@ -41,5 +49,5 @@ int main() {
         delete(*it);
     deleteVector(v);
     delete[] fileData;
-
+    return 0;
 }
